@@ -2,17 +2,17 @@ package main
 
 import (
 	"log"
-	"sockets/client"
+	// "sockets/client"
 	"sockets/server"
-	"time"
+	// "time"
 )
 
 func main() {
 	log.Print("Starting server")
-	go server.RunServer()
+	server.RunServer()
 
-	log.Print("Starting client")
-	go client.RunClient()
+	// log.Print("Starting client")
+	// go client.RunClient()
 
-	time.Sleep(3 * time.Second)
+	// time.Sleep(3 * time.Second)
 }
