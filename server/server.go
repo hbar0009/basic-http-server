@@ -3,6 +3,8 @@ package server
 import (
 	"bytes"
 	"log"
+	"os"
+	"os/signal"
 	"syscall"
 )
 
@@ -14,11 +16,22 @@ var (
 )
 
 func RunServer() {
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt)
+
 	serverFd, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_STREAM, 0)
 
 	if err != nil {
 		log.Fatal("Error creating server socket: ", err)
 	}
+
+	go func() {
+		for range sigChan {
+			log.Print("SIGINT received. Exiting.")
+			syscall.Close(serverFd)
+			os.Exit(0)
+		}
+	}()
 
 	err = syscall.Bind(serverFd, &syscall.SockaddrInet4{Port: PORT, Addr: ADDR})
 
