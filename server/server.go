@@ -86,7 +86,7 @@ func createHtmlResponse() []byte {
 	var out bytes.Buffer
 
 	out.WriteString("HTTP/1.1 200 OK\n")
-	out.WriteString("Content-Type: text/html; chatset=utf-8\n")
+	out.WriteString("Content-Type: text/html; charset=utf-8\n")
 	out.WriteString("\n")
 
 	someHtml := "<!doctype html><html><p>Hello world!</p><html>"
