@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 )
 
@@ -13,6 +14,7 @@ var (
 	ADDR       = [4]byte{127, 0, 0, 1}
 	BACKLOG    = 128
 	MAXMSGSIZE = 8000
+	BASEPATH   = "/routes"
 )
 
 func RunServer() {
@@ -45,6 +47,10 @@ func RunServer() {
 		log.Fatal("Error listening to server socket: ", err)
 	}
 
+	// fds := syscall.FdSet{Bits: [16]int64{}}
+
+	// syscall.Select()
+
 	clientFd, clientAddr, err := syscall.Accept(serverFd)
 
 	if err != nil {
@@ -61,7 +67,13 @@ func RunServer() {
 
 	log.Printf("Message received (%d bytes):\n%s\n", numBytes, msg)
 
-	response := createHtmlResponse()
+	// todo: determine what kind of request it was, and how to handle it
+	// maybe into like a Request struct? or just headers?
+
+	// someHtml := handleGETRequest(msg)
+	payload := handleGETRequest(msg)
+
+	response := addHttpHeaders(payload)
 
 	err = syscall.Sendmsg(clientFd, response, nil, clientAddr, syscall.MSG_DONTWAIT)
 
@@ -82,15 +94,44 @@ func RunServer() {
 	}
 }
 
-func createHtmlResponse() []byte {
+func addHttpHeaders(payload []byte) []byte {
 	var out bytes.Buffer
 
 	out.WriteString("HTTP/1.1 200 OK\n")
 	out.WriteString("Content-Type: text/html; charset=utf-8\n")
 	out.WriteString("\n")
 
-	someHtml := "<!doctype html><html><p>Hello world!</p><html>"
-	out.WriteString(someHtml)
+	out.Write(payload)
 
 	return out.Bytes()
+}
+
+func handleGETRequest(msg []byte) []byte {
+	buf := bytes.NewBuffer(msg)
+	firstLine, err := buf.ReadString('\n')
+
+	if err != nil {
+		log.Fatal("Error reading message: ", err)
+	}
+
+	path := strings.Split(firstLine, " ")[1]
+
+	//todo: parse path properly, handle dynamic route
+	// and handle '/' routes, as well as no .html
+	log.Print(path)
+
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Fatal("Error getting current directory: ", err)
+	}
+
+	fullPath := wd + BASEPATH + path
+
+	fileContents, err := os.ReadFile(fullPath)
+
+	if err != nil {
+		log.Fatal("Error reading requested file: ", err)
+	}
+
+	return fileContents
 }
