@@ -114,18 +114,9 @@ func handleGETRequest(msg []byte) []byte {
 		log.Fatal("Error reading message: ", err)
 	}
 
+	//todo: parse path properly
 	path := strings.Split(firstLine, " ")[1]
-
-	//todo: parse path properly, handle dynamic route
-	// and handle '/' routes, as well as no .html
-	log.Print(path)
-
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Fatal("Error getting current directory: ", err)
-	}
-
-	fullPath := wd + BASEPATH + path
+	fullPath := resolvePath(path)
 
 	fileContents, err := os.ReadFile(fullPath)
 
@@ -134,4 +125,26 @@ func handleGETRequest(msg []byte) []byte {
 	}
 
 	return fileContents
+}
+
+func resolvePath(path string) string {
+	//todo: handle dynamic routes
+
+	var sb strings.Builder
+
+	wd, err := os.Getwd()
+
+	if err != nil {
+		log.Fatal("Error getting current directory: ", err)
+	}
+
+	sb.WriteString(wd)
+	sb.WriteString(BASEPATH)
+	sb.WriteString(path)
+
+	if path[len(path)-1] == '/' {
+		sb.WriteString("index.html")
+	}
+
+	return sb.String()
 }
